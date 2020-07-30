@@ -7,6 +7,8 @@ for the product or do some operation as requested from the front end  */
  */
 const LOCAL_API = `http://127.0.0.1:8000/products/`;
 let LookingForProduct = true;
+let camera = document.querySelector("#camera");
+
 /* ------------------- helper functions -------------------  */
 const fetchProducts = async () => {
   try {
@@ -44,12 +46,14 @@ const fetchProductByCode = async (code) => {
     );
   }
 };
+function activateCamera() {
+  StartQuagga();
+}
 
 const startLookingForProduct = async (code) => {
   if (startLookingForProduct) {
     setTimeout(async () => {
       if (LookingForProduct) {
-          
         const response = await fetchProductByCode(code);
         if (response.code === 200) {
           //after we found it finally
@@ -57,48 +61,58 @@ const startLookingForProduct = async (code) => {
           //means it was found and scanned correctly
           Quagga.stop();
           document.querySelector("#resultado").innerText = code;
-          console.log(response);
           //stop calling the function
+          console.log(response);
           return response;
         }
       }
-    }, 1000);
+    }, 1200);
   }
 };
 
 /* ------------------- Quagga Configuration ------------------- */
-Quagga.init(
-  {
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: document.querySelector("#camera"), // Or '#yourElement' (optional)
+function StartQuagga() {
+  //setting the looking for product condition to be true again
+  LookingForProduct = true;
+  Quagga.init(
+    {
+      inputStream: {
+        name: "Live",
+        type: "LiveStream",
+        target: camera, // Or '#yourElement' (optional)
+      },
+      decoder: {
+        readers: [
+          "code_128_reader",
+          "ean_reader",
+          "ean_8_reader",
+          "code_39_reader",
+          "code_39_vin_reader",
+          "upc_reader",
+          "upc_e_reader",
+          "i2of5_reader",
+        ],
+      },
     },
-    decoder: {
-      readers: [
-        "code_128_reader",
-        "ean_reader",
-        "ean_8_reader",
-        "code_39_reader",
-        "code_39_vin_reader",
-        "upc_reader",
-        "upc_e_reader",
-        "i2of5_reader",
-      ],
-    },
-  },
-  function (err) {
-    if (err) {
-      console.log(err);
-      return;
+    function (err) {
+      if (err) {
+        console.log(err);
+        return;
+      }
+      console.log("Initialization finished. Ready to start");
+      Quagga.start();
     }
-    console.log("Initialization finished. Ready to start");
-    Quagga.start();
-  }
-);
+  );
 
-Quagga.onDetected(async function (data) {
-  //stop after dedication by setting time interval every second call db
-  const code = data.codeResult.code;
-  await startLookingForProduct(code);
-});
+  Quagga.onDetected(async function (data) {
+    //stop after dedication by setting time interval every second call db
+    const code = data.codeResult.code;
+    await startLookingForProduct(code);
+  });
+}
+//start webcam
+StartQuagga();
+
+//events
+//starting again if the div was clicked
+camera.addEventListener("click", () => activateCamera());
