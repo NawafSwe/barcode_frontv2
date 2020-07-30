@@ -8,6 +8,13 @@ for the product or do some operation as requested from the front end  */
 const LOCAL_API = `http://127.0.0.1:8000/products/`;
 let LookingForProduct = true;
 let camera = document.querySelector("#camera");
+let productName = document.querySelector("#product-name");
+let productCode = document.querySelector("#product-code");
+let productQuantity = document.querySelector("#product-quantity");
+
+let productNameValue = "";
+let productCodeValue = "";
+let productQuantityValue = "";
 
 /* ------------------- helper functions -------------------  */
 const fetchProducts = async () => {
@@ -56,14 +63,21 @@ const startLookingForProduct = async (code) => {
       if (LookingForProduct) {
         const response = await fetchProductByCode(code);
         if (response.code === 200) {
+          //do not forgot to fix it from the backend please
+          const product = await response.product[0];
           //after we found it finally
           LookingForProduct = false;
           //means it was found and scanned correctly
           Quagga.stop();
-          document.querySelector("#resultado").innerText = code;
+          productNameValue = await product.name;
+          productCodeValue = await product.code;
+          productQuantityValue = await product.quantity;
+
           //stop calling the function
-          console.log(response);
-          return response;
+          console.log(product);
+          
+          updateUI();
+          return product;
         }
       }
     }, 1200);
@@ -116,3 +130,9 @@ StartQuagga();
 //events
 //starting again if the div was clicked
 camera.addEventListener("click", () => activateCamera());
+
+function updateUI() {
+  productName.textContent = `product name : ${productNameValue}`;
+  productQuantity.textContent = `product quantity : ${productQuantityValue}`;
+  productCode.textContent = `product quantity : ${productCodeValue}`;
+}
